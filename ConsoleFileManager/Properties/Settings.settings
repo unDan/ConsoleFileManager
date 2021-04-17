@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ConsoleFileManager.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="configFilePath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">..\..\AppData\config.json</Value>
+    </Setting>
+    <Setting Name="lastStateSaveFilePath" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">..\..\AppData\last state.save</Value>
+    </Setting>
+    <Setting Name="errorsLogsDirectory" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">..\..\Errors</Value>
+    </Setting>
+    <Setting Name="filesPerPageDefault" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">20</Value>
+    </Setting>
+    <Setting Name="windowBorderSymbolDefault" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">=</Value>
+    </Setting>
+    <Setting Name="backgroundColorDefault" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">black</Value>
+    </Setting>
+    <Setting Name="foregroundColorDefault" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">white</Value>
+    </Setting>
+    <Setting Name="appName" Type="System.String" Scope="Application">
+      <Value Profile="(Default)">Console File Manager</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
+
