@@ -95,6 +95,7 @@
   <ItemGroup>
     <Content Include="AppData\config.json" />
     <Content Include="AppData\last state.save" />
+    <Content Include="Errors\.gitkeep" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
