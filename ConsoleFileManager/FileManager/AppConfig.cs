@@ -12,7 +12,7 @@ namespace ConsoleFileManager.FileManager
         public int FilesPerPage { get; set; }
         
         /// <summary> The symbol to draw window borders with. </summary>
-        public string WindowBorder { get; set; }
+        public string WindowBorderSymbol { get; set; }
         
         /// <summary> The background color of the console. </summary>
         public string BackgroundColor { get; set; }
@@ -27,7 +27,7 @@ namespace ConsoleFileManager.FileManager
         public AppConfig()
         {
             FilesPerPage = Settings.Default.filesPerPageDefault;
-            WindowBorder = Settings.Default.windowBorderSymbolDefault;
+            WindowBorderSymbol = Settings.Default.windowBorderSymbolDefault;
             BackgroundColor = Settings.Default.backgroundColorDefault;
             ForegroundColor = Settings.Default.foregroundColorDefault;
         }
