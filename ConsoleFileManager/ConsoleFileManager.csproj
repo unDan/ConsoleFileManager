@@ -78,6 +78,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="FileManager\AppConfig.cs" />
+    <Compile Include="FileManager\ConsoleCommand.cs" />
     <Compile Include="FileManager\ErrorLogger.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
