@@ -26,6 +26,9 @@
     <Setting Name="appName" Type="System.String" Scope="Application">
       <Value Profile="(Default)">Console File Manager</Value>
     </Setting>
+    <Setting Name="showPageDefault" Type="System.Int32" Scope="Application">
+      <Value Profile="(Default)">1</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
 

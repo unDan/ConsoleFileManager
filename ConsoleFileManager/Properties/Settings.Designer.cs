@@ -94,5 +94,14 @@ namespace ConsoleFileManager.Properties {
                 return ((string)(this["appName"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int showPageDefault {
+            get {
+                return ((int)(this["showPageDefault"]));
+            }
+        }
     }
 }
