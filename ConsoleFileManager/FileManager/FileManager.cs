@@ -8,6 +8,9 @@ namespace ConsoleFileManager.FileManager
 {
     public class FileManager
     {
+        private static FileManager instance;
+        
+        
         /// <summary> The configuration of the application. </summary>
         private AppConfig config;
         
@@ -34,11 +37,26 @@ namespace ConsoleFileManager.FileManager
 
         
         /// <summary>
-        /// Initialize a new instance of File Manager that has configuration read from file.
+        /// Initialize a new instance of File Manager that has configuration read from the config file, and state
+        /// restored from the save file.
         /// </summary>
-        public FileManager()
+        private FileManager()
         {
-            
+            ReadConfig();
+            ApplyConfig();
+            RestoreLastState();
+        }
+
+
+        /// <summary>
+        /// Get instance of the File Manager.
+        /// </summary>
+        public static FileManager GetInstance()
+        {
+            if (instance is null)
+                instance = new FileManager();
+
+            return instance;
         }
 
 
