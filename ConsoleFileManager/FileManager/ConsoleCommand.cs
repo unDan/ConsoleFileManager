@@ -72,7 +72,7 @@ namespace ConsoleFileManager.FileManager
             
             // get all required args w/o " symbol from the command string
             var requiredArgs = new List<string>();
-            foreach (Match reqArg in Regex.Matches(commandStr, @"""[^/*?""<>|]+"""))
+            foreach (Match reqArg in Regex.Matches(commandStr, @"""[^/*?""<>|]*"""))
                 requiredArgs.Add(reqArg.Value.Trim('\"'));
             
             

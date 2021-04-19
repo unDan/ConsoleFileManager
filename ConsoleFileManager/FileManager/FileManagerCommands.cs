@@ -31,13 +31,13 @@ namespace ConsoleFileManager.FileManager
                 new ConsoleCommand(
                     "del", 
                     Delete,
-                    new Regex(@"^(del (""[^/*?""<>|]+"")( -r true)?)$"),
+                    new Regex(@"^(del (""[^/*?""<>|]*"")( -r true)?)$"),
                     "r"
                 ),
                 new ConsoleCommand(
                     "info",
                     GetFileInfo,
-                    new Regex(@"^(info (""[^/*?""<>|]+""))$")
+                    new Regex(@"^(info (""[^/*?""<>|]*""))$")
                 ),
                 new ConsoleCommand(
                     "exit", 
@@ -48,6 +48,7 @@ namespace ConsoleFileManager.FileManager
         }
         
 
+        
         public void ExecuteCommand(string commandStr)
         {
             /* Check if command entered correctly */
@@ -77,6 +78,7 @@ namespace ConsoleFileManager.FileManager
 
         }
 
+        
 
         private string ParsePath(string pathToParse, string currentDirectory)
         {
@@ -96,6 +98,7 @@ namespace ConsoleFileManager.FileManager
         }
         
 
+        
         private void GoToDirectory(params string[] args)
         {
             /* Check and parse arguments */
@@ -142,16 +145,84 @@ namespace ConsoleFileManager.FileManager
         }
 
         
+        
         private void Copy(params string[] args)
         {
             
         }
 
+        
+        
         private void Delete(params string[] args)
         {
+            /* Check and parse arguments */
+            var pathArg = args[0];
+            var recursiveArg = args[1];
+
+            string path;
+            bool recursiveDeletion;
+
+            path = ParsePath(pathArg, CurrentDirectory);
             
+            // path can be null only if current directory is null
+            if (path is null)
+            {
+                CurrentShownInfo = new Info(
+                    "Невозможно перейти по указанному пути. Укажите абсолютный путь.",
+                    InfoType.Warning
+                );
+                return;
+            }
+
+            if (!File.Exists(path) && !Directory.Exists(path))
+            {
+                CurrentShownInfo = new Info(
+                    "Ошибка исполнения команды: указанный файл или директория не существует.",
+                    InfoType.Warning
+                );
+                return;
+            }
+
+            recursiveDeletion = recursiveArg != null;
+            
+            
+            var isFile = Path.HasExtension(path);
+            
+            try
+            {
+                if (isFile)
+                    File.Delete(path);
+                else
+                {
+                    if (Directory.GetFileSystemEntries(path).Length != 0 && recursiveDeletion == false)
+                    {
+                        CurrentShownInfo = new Info(
+                            "Указанная директория не пуста. Если вы желаете удалить папку вместе со всем её" +
+                            "содержимым, повторите команду, указав аргумент рекурсивного удаления:\n" +
+                            $"del \"{path}\" -r true"
+                        );
+                        
+                        return;
+                    }
+                    
+                    Directory.Delete(path, recursiveDeletion);
+
+                    CurrentDirectory = Path.GetDirectoryName(path);
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorLogger.LogError(e);
+
+                CurrentShownInfo = new Info(
+                    $"Произошла ошибка при попытке удалить {(isFile ? "файл" : "папку")}: {e.Message}",
+                    InfoType.Error
+                );
+            }
         }
 
+        
+        
         private void GetFileInfo(params string[] args)
         {
             /* Check and parse path to the file */
@@ -229,7 +300,7 @@ namespace ConsoleFileManager.FileManager
                     string sizeNormStr;
                     string sizeBytesStr;
 
-                    if (sizeBytes > 0d)
+                    if (sizeBytes >= 0d)
                     {
                         sizeNormStr = sizeNormalized.ToString(CultureInfo.CurrentCulture) + " " + sizeType;
                         sizeBytesStr = sizeBytes.ToString(CultureInfo.CurrentCulture) + " байт";
@@ -285,7 +356,7 @@ namespace ConsoleFileManager.FileManager
                     string sizeNormStr;
                     string sizeBytesStr;
 
-                    if (sizeBytes > 0d)
+                    if (sizeBytes >= 0d)
                     {
                         sizeNormStr = sizeNormalized.ToString(CultureInfo.CurrentCulture) + " " + sizeType;
                         sizeBytesStr = sizeBytes.ToString(CultureInfo.CurrentCulture) + " байт";
