@@ -19,13 +19,13 @@ namespace ConsoleFileManager.FileManager
                 new ConsoleCommand(
                     "gotd", 
                     GoToDirectory, 
-                    new Regex(@"^(gotd (""[^/*?""<>|]+"")( -p \d+)?)$"),
+                    new Regex(@"^(gotd (""[^/*?""<>|]*"")( -p \d+)?)$"),
                     "p"
                 ),
                 new ConsoleCommand(
                     "cpy",
                     Copy,
-                    new Regex(@"^(cpy (""[^/*?""<>|]+"") (""[^/*?""<>|]+"")( -rf (true|false))?)$"),
+                    new Regex(@"^(cpy (""[^/*?""<>|]+"") (""[^/*?""<>|]*"")( -rf (true|false))?)$"),
                     "rf"
                 ),
                 new ConsoleCommand(
@@ -96,8 +96,28 @@ namespace ConsoleFileManager.FileManager
 
             return path;
         }
-        
 
+
+        private string CreateCopyFileName(string fileName, string extension)
+        {
+            var copyCheckRegex = new Regex(@"( — копия \(\d+\))$");
+            
+            // if file name ends with ' - копия' или ' - копия (число)'
+            if (copyCheckRegex.IsMatch(fileName))
+            {
+                var firstDigitIndex = fileName.LastIndexOf('(') + 1;
+                var lastDigitIndex = fileName.LastIndexOf(')') - 1;
+
+                var amount = int.Parse(fileName.Substring(firstDigitIndex, lastDigitIndex - firstDigitIndex + 1));
+                amount++;
+
+                return copyCheckRegex.Replace(fileName, $" — копия ({amount})") + extension;
+            }
+            else
+                return fileName + " — копия (1)" + extension;
+        }
+
+        
         
         private void GoToDirectory(params string[] args)
         {
@@ -116,7 +136,7 @@ namespace ConsoleFileManager.FileManager
             {
                 CurrentShownInfo = new Info(
                     "Невозможно перейти по указанному пути. Укажите абсолютный путь.",
-                    InfoType.Warning
+                    InfoType.Error
                 );
                 return;
             }
@@ -126,7 +146,7 @@ namespace ConsoleFileManager.FileManager
             {
                 CurrentShownInfo = new Info(
                     $"Ошибка исполнения команды: указанная директория не существует.",
-                    InfoType.Warning
+                    InfoType.Error
                 );
                 return;
             }
@@ -148,7 +168,111 @@ namespace ConsoleFileManager.FileManager
         
         private void Copy(params string[] args)
         {
+            /* Check and parse arguments */
+            var copiedPathArg = args[0];
+            var destinationPathArg = args[1];
+            var replaceFileArg = args[2];
+
+            string copiedPath;
+            string destinationPath;
+            bool replaceFile;
+
+            copiedPath = ParsePath(copiedPathArg, CurrentDirectory);
+            destinationPath = ParsePath(destinationPathArg, CurrentDirectory);
             
+            // path can be null only if current directory is null
+            if (copiedPath is null)
+            {
+                CurrentShownInfo = new Info(
+                    "Невозможно использовать указанный путь. Укажите абсолютный путь.",
+                    InfoType.Error
+                );
+                return;
+            }
+            
+            // check if copied file or directory exists
+            if (!File.Exists(copiedPath) && !Directory.Exists(copiedPath))
+            {
+                CurrentShownInfo = new Info(
+                    "Ошибка исполнения команды: указанный файл или директория не существует.",
+                    InfoType.Error
+                );
+                
+                return;
+            }
+
+            
+            var copiedObjIsFile = Path.HasExtension(copiedPath);
+
+            
+            // check if destination path is a directory that exists
+            if (!Directory.Exists(destinationPath))
+            {
+                CurrentShownInfo = new Info(
+                    "Ошибка исполнения команды: папки назначения не существует, либо путь указывал на файл.",
+                    InfoType.Error
+                );
+                
+                return;
+            }
+
+            // parse extra arg
+            replaceFile = replaceFileArg is null ? false : bool.Parse(replaceFileArg);
+
+            
+            try
+            {
+                destinationPath = Path.Combine(destinationPath, Path.GetFileName(copiedPath));
+
+                
+                if (copiedObjIsFile)
+                {
+                    // if file in destination folder exists and no extra arg was specified
+                    // then warn the user
+                    if (replaceFileArg is null && File.Exists(destinationPath))
+                    {
+                        CurrentShownInfo = new Info(
+                            $"В папке назначения уже есть файл с именем {Path.GetFileName(copiedPath)}.\n" +
+                            "Если вы желаете заменить файл в папке назначения, " +
+                            "повторите команду с указанием аргумента замены как true:\n" +
+                            $"cpy \"{copiedPath}\" \"{Path.GetDirectoryName(destinationPath)}\" -rf true\n" +
+                            "Если же вы желаете создать в папке назначения ещё один такой же файл, " +
+                            "повторите команду с указанием аргумента замены как false:\n" +
+                            $"cpy \"{copiedPath}\" \"{Path.GetDirectoryName(destinationPath)}\" -rf false"
+                        );
+                        
+                        return;
+                    }
+
+                    // if replace file arg was specified as false, then create new name for the copied file
+                    if (!replaceFile && File.Exists(destinationPath))
+                    {
+                        var newFileName = CreateCopyFileName(
+                            Path.GetFileNameWithoutExtension(copiedPath),
+                            Path.GetExtension(copiedPath)
+                        );
+
+                        destinationPath = Path.Combine(Path.GetDirectoryName(destinationPath), newFileName);
+                    }
+                    
+                    File.Copy(copiedPath, destinationPath, replaceFile);
+                }
+                else
+                {
+                    
+                }
+                
+                CurrentShownInfo = Info.Empty;
+            }
+            catch (Exception e)
+            {
+                ErrorLogger.LogError(e);
+
+                CurrentShownInfo = new Info(
+                    $"Произошла ошибка при попытке скопировать {(copiedObjIsFile ? "файл" : "папку")}: {e.Message}",
+                    InfoType.Error
+                );
+            }
         }
 
         
@@ -168,8 +292,8 @@ namespace ConsoleFileManager.FileManager
             if (path is null)
             {
                 CurrentShownInfo = new Info(
-                    "Невозможно перейти по указанному пути. Укажите абсолютный путь.",
-                    InfoType.Warning
+                    "Невозможно использовать указанный путь. Укажите абсолютный путь.",
+                    InfoType.Error
                 );
                 return;
             }
@@ -178,7 +302,7 @@ namespace ConsoleFileManager.FileManager
             {
                 CurrentShownInfo = new Info(
                     "Ошибка исполнения команды: указанный файл или директория не существует.",
-                    InfoType.Warning
+                    InfoType.Error
                 );
                 return;
             }
@@ -208,6 +332,7 @@ namespace ConsoleFileManager.FileManager
                     Directory.Delete(path, recursiveDeletion);
 
                     CurrentDirectory = Path.GetDirectoryName(path);
+                    CurrentShownInfo = Info.Empty;
                 }
             }
             catch (Exception e)
@@ -234,8 +359,8 @@ namespace ConsoleFileManager.FileManager
             if (path is null)
             {
                 CurrentShownInfo = new Info(
-                    "Невозможно перейти по указанному пути. Укажите абсолютный путь.",
-                    InfoType.Warning
+                    "Невозможно использовать указанный путь. Укажите абсолютный путь.",
+                    InfoType.Error
                 );
                 return;
             }
@@ -244,7 +369,7 @@ namespace ConsoleFileManager.FileManager
             {
                 CurrentShownInfo = new Info(
                     "Ошибка исполнения команды: указанный файл или директория не существует.",
-                    InfoType.Warning
+                    InfoType.Error
                 );
                 return;
             }
