@@ -116,14 +116,11 @@ namespace ConsoleFileManager.FileManager
                 return;
             }
             
-            // check if parsed directory exists and is available
-            var errorMsg = CheckDirectory(path, out _);
-
-            // if error message is not null then an exception was thrown while trying to access the directory.
-            if (errorMsg != null)
+            // check if parsed directory exists
+            if (!Directory.Exists(path))
             {
                 CurrentShownInfo = new Info(
-                    $"Ошибка исполнения команды: {errorMsg}",
+                    $"Ошибка исполнения команды: неверно указан путь к директории.",
                     InfoType.Warning
                 );
                 return;
@@ -155,7 +152,22 @@ namespace ConsoleFileManager.FileManager
 
         private void GetFileInfo(params string[] args)
         {
+            var pathArg = args[0];
+
+            string path = ParsePath(pathArg, CurrentDirectory);
             
+            // path can be null only if current directory is null
+            if (path is null)
+            {
+                CurrentShownInfo = new Info(
+                    "Невозможно перейти по указанному пути. Укажите абсолютный путь.",
+                    InfoType.Warning
+                );
+                return;
+            }
+
+            
+
         }
 
         private void Exit(params string[] args)

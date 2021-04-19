@@ -183,33 +183,7 @@ namespace ConsoleFileManager.FileManager
             return true;
         }
         
-
-        /// <summary>
-        /// Check the directory at specified path to have no problems with accessing it. <para/>
-        /// Returns error message if there are some problems with accessing the directory. <para/>
-        /// Returns null if there are no problems with accessing the directory.
-        /// </summary>
-        /// <param name="dirPath">The path to the directory to check.</param>
-        /// <param name="filesAndDirsAmount">The total amount of files and directories in this directory. </param>
-        /// <returns>Error message if any error occurs, or null if no error occured.</returns>
-        public string CheckDirectory(string dirPath, out int filesAndDirsAmount)
-        {
-            try
-            {
-                var dirsAmount = Directory.GetDirectories(dirPath).Length;
-                var filesAmount = Directory.GetFiles(dirPath).Length;
-
-                filesAndDirsAmount = dirsAmount + filesAmount;
-                return null;
-            }
-            catch (Exception e)
-            {
-                filesAndDirsAmount = 0;
-                return e.Message;
-            }
-        }
-
-
+        
         /// <summary>
         /// Restore current directory and shown page since the last app work. <para/>
         /// Current directory and shown page are read from the save file. If save file does not contain saved directory
@@ -257,12 +231,8 @@ namespace ConsoleFileManager.FileManager
             }
             
             
-            string error = CheckDirectory(restoredDirectory, out _);
-
-            
-            // if any exception was thrown while trying to access the directory then error message will not be null;
-            // it means that there is a problem with restored path, so try to get a root path on any drive
-            if (error != null)
+            // it restored directory does not exist then try to get a root path on any drive
+            if (!Directory.Exists(restoredDirectory))
             {
                 // apply root directory of the drive as current and set the first page as page to show
                 var restoredFromDrive= TryRestoreFromRootOnAnyDrive(out restoredDirectory, out restoredPage);

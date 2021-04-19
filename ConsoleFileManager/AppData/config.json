@@ -1,6 +1,6 @@
 ﻿{
-  "FilesPerPage": 10,
+  "FilesPerPage": 15,
   "BackgroundColor": "black",
   "ForegroundColor": "red",
-  "WindowBorderSymbol": "-"
+  "WindowBorderSymbol": "~"
 }
