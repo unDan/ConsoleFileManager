@@ -42,6 +42,7 @@ namespace ConsoleFileManager.FileManager
         /// </summary>
         private FileManager()
         {
+            InitializeCommands();
             ReadConfig();
             ApplyConfig();
             RestoreLastState();
@@ -109,12 +110,8 @@ namespace ConsoleFileManager.FileManager
         /// </summary>
         private void DrawWindowBorder()
         {
-            Console.WriteLine();
-            
             for (var i = 0; i < Console.BufferWidth; i++)
                 Console.Write(config.WindowBorderSymbol);
-            
-            Console.WriteLine();
         }
 
 
@@ -409,6 +406,9 @@ namespace ConsoleFileManager.FileManager
                     );
 
                     CurrentShownPage = 1;
+
+                    firstShownFileNum = 0;
+                    lastShownFileNum = config.FilesPerPage - 1;
                 }
             }
                 
@@ -425,7 +425,13 @@ namespace ConsoleFileManager.FileManager
         {
             DrawWindowBorder();
             
-            Console.Out.Write(CurrentShownInfo.Data);
+            if (!CurrentShownInfo.IsEmpty)
+                Console.Out.WriteLine(CurrentShownInfo.Data);
+            else
+            {
+                for (var i = 0; i < config.FilesPerPage / 3; i++)
+                    Console.Out.WriteLine("");
+            }
             
             DrawWindowBorder();
         }
@@ -441,6 +447,8 @@ namespace ConsoleFileManager.FileManager
                 ShowInfoWindow();
 
                 var enteredCommand = Console.In.ReadLine();
+                
+                ExecuteCommand(enteredCommand);
 
                 if (isExiting)
                     break;
