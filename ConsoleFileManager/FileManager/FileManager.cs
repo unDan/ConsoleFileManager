@@ -108,9 +108,18 @@ namespace ConsoleFileManager.FileManager
         /// <summary>
         /// Draw the window border to the full width of the buffer area using the window border symbol from the configuration
         /// </summary>
-        private void DrawWindowBorder()
+        private void DrawWindowBorder(string windowTitle = null)
         {
-            for (var i = 0; i < Console.BufferWidth; i++)
+            windowTitle = windowTitle is null ? "" : $"[{windowTitle}]";
+            var i = 0;
+            
+            for (; i < 5; i++)
+                Console.Write(config.WindowBorderSymbol);
+            
+            for (var j = 0; j < windowTitle.Length; j++, i++) 
+                Console.Write(windowTitle[j]);
+            
+            for (; i < Console.BufferWidth ; i++)
                 Console.Write(config.WindowBorderSymbol);
         }
 
@@ -280,7 +289,7 @@ namespace ConsoleFileManager.FileManager
         /// </summary>
         private void ShowFiles(List<string> dirsAndFilesList, int firstShownFileNum, int lastShownFileNum)
         {
-            DrawWindowBorder();
+            DrawWindowBorder("Файловая структура");
             
             Console.WriteLine($"> {CurrentDirectory ?? "???"}");
 
@@ -391,12 +400,12 @@ namespace ConsoleFileManager.FileManager
         /// Show window with information about some file or with message/warning/error to let user know that
         /// something went wrong.
         /// </summary>
-        public void ShowInfoWindow()
+        public void ShowInfoWindow(string title = "Информация")
         {
-            DrawWindowBorder();
-            
+            DrawWindowBorder(title);
+
             if (!CurrentShownInfo.IsEmpty)
-                Console.Out.WriteLine(CurrentShownInfo.Data);
+                Console.Out.WriteLine($"\n{CurrentShownInfo.Data}\n");
             else
             {
                 for (var i = 0; i < config.FilesPerPage / 3; i++)
