@@ -6,7 +6,7 @@ using System.Text.Json;
 
 namespace ConsoleFileManager.FileManager
 {
-    public class FileManager
+    public partial class FileManager
     {
         private static FileManager instance;
         
