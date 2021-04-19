@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using ConsoleFileManager.Properties;
 
@@ -120,7 +122,7 @@ namespace ConsoleFileManager.FileManager
             if (!Directory.Exists(path))
             {
                 CurrentShownInfo = new Info(
-                    $"Ошибка исполнения команды: неверно указан путь к директории.",
+                    $"Ошибка исполнения команды: указанная директория не существует.",
                     InfoType.Warning
                 );
                 return;
@@ -152,6 +154,7 @@ namespace ConsoleFileManager.FileManager
 
         private void GetFileInfo(params string[] args)
         {
+            /* Check and parse path to the file */
             var pathArg = args[0];
 
             string path = ParsePath(pathArg, CurrentDirectory);
@@ -166,8 +169,192 @@ namespace ConsoleFileManager.FileManager
                 return;
             }
 
+            if (!File.Exists(path) && !Directory.Exists(path))
+            {
+                CurrentShownInfo = new Info(
+                    "Ошибка исполнения команды: указанный файл или директория не существует.",
+                    InfoType.Warning
+                );
+                return;
+            }
             
+            
+            /* Get info */
+            var isFile = Path.HasExtension(path);
+            string info;
+            
+            // main information
+            string name;
+            string extension;
+            string location;
 
+            // size information
+            string sizeType = "";
+            double sizeBytes;
+            double sizeNormalized;
+                
+            // time information
+            DateTime creationTime;
+            DateTime lastChangeTime;
+            DateTime lastOpenedTime;
+                
+            FileAttributes attributes;
+
+            try
+            {
+                if (isFile)
+                {
+                    attributes = File.GetAttributes(path);
+
+                    
+                    name = Path.GetFileNameWithoutExtension(path);
+                    extension = Path.GetExtension(path);
+                    location = Path.GetDirectoryName(path);
+                
+                    
+                    creationTime = File.GetCreationTime(path);
+                    lastChangeTime = File.GetLastWriteTime(path);
+                    lastOpenedTime = File.GetLastAccessTime(path);
+                    
+                    
+                    /* Try to get the size of the file */
+                    var dirFilesInfo = new List<FileInfo>(new DirectoryInfo(location).GetFiles());
+                    FileInfo fileInfo = dirFilesInfo.Find(fInfo => fInfo.Name == (name + extension));
+                    
+                    sizeBytes = fileInfo is null ? -1 : fileInfo.Length;
+                    sizeNormalized = fileInfo is null ? -1 : Converter.GetNormalizedSize(sizeBytes, out sizeType);
+                    
+                    
+                    /* Join all retrieved data to info string */
+                    string sizeNormStr;
+                    string sizeBytesStr;
+
+                    if (sizeBytes > 0d)
+                    {
+                        sizeNormStr = sizeNormalized.ToString(CultureInfo.CurrentCulture) + " " + sizeType;
+                        sizeBytesStr = sizeBytes.ToString(CultureInfo.CurrentCulture) + " байт";
+                    }
+                    else
+                    {
+                        sizeNormStr = "неизвестно";
+                        sizeBytesStr = "незивестно";
+                    }
+
+                    info =
+                        $"Имя:          {name}\n" +
+                        $"Тип:          Файл ({extension})\n" +
+                        $"Расположение: {location}\n" +
+                        $"Размер:       {sizeNormStr} ({sizeBytesStr})\n" +
+                        $"Создан:       {creationTime.ToString(CultureInfo.CurrentCulture)}\n" +
+                        $"Изменен:      {lastChangeTime.ToString(CultureInfo.CurrentCulture)}\n" +
+                        $"Открыт:       {lastOpenedTime.ToString(CultureInfo.CurrentCulture)}\n" +
+                        "\n" +
+                        "Атрибуты:\n";
+                }
+                else
+                {
+                    name = Path.GetFileNameWithoutExtension(path);
+                    location = Path.GetDirectoryName(path);
+                
+                    
+                    // get time info
+                    creationTime = File.GetCreationTime(path);
+                    
+                    
+                    // get the size of the file and its attributes
+                    var dirDirsInfo = new List<DirectoryInfo>(new DirectoryInfo(location).GetDirectories());
+                    DirectoryInfo dirInfo = dirDirsInfo.Find(dInfo => dInfo.Name == name);
+
+                    attributes = dirInfo.Attributes;
+                    
+
+                    try
+                    {
+                        sizeBytes = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(fi => fi.Length);
+                        sizeNormalized = Converter.GetNormalizedSize(sizeBytes, out sizeType);
+                    }
+                    catch (Exception e)
+                    {
+                        ErrorLogger.LogError(e);
+                        sizeBytes = -1;
+                        sizeNormalized = -1;
+                    }
+                    
+                
+                    // create info string
+                    string sizeNormStr;
+                    string sizeBytesStr;
+
+                    if (sizeBytes > 0d)
+                    {
+                        sizeNormStr = sizeNormalized.ToString(CultureInfo.CurrentCulture) + " " + sizeType;
+                        sizeBytesStr = sizeBytes.ToString(CultureInfo.CurrentCulture) + " байт";
+                    }
+                    else
+                    {
+                        sizeNormStr = "неизвестно";
+                        sizeBytesStr = "неизвестно";
+                    }
+                    
+
+                    info =
+                        $"Имя:          {name}\n" +
+                        $"Тип:          Папка с файлами\n" +
+                        $"Расположение: {location}\n" +
+                        $"Размер:       {sizeNormStr} ({sizeBytesStr})\n" +
+                        $"Создан:       {creationTime.ToString(CultureInfo.CurrentCulture)}\n" +
+                        "\n" +
+                        "Атрибуты:\n";
+                }
+            }
+            catch (Exception e)
+            {
+                ErrorLogger.LogError(e);
+
+                var type = isFile ? "файле" : "папке";
+                
+                CurrentShownInfo = new Info(
+                    $"Произошла ошибка при попытке получить информацию о {type}: {e.Message}",
+                    InfoType.Error
+                );
+                
+                return;
+            }
+            
+            
+            /* Check attributes and add them to the info string */
+            if ((attributes & FileAttributes.ReadOnly) != 0) 
+                info += $"\t      Только для чтения{(isFile? "" : " (применимо только к файлам в каталоге)")}\n";
+                
+            if ((attributes & FileAttributes.Hidden) != 0) 
+                info += "\t      Скрытый\n";
+
+            if (isFile && (attributes & FileAttributes.Temporary) != 0)
+                info += "\t      Временный файл\n";
+
+            if (isFile && (attributes & FileAttributes.System) != 0)
+                info += "\t      Системный файл\n";
+            
+            if (!isFile && (attributes & FileAttributes.Directory) != 0)
+                info += "\t      Каталог\n";
+
+            if ((attributes & FileAttributes.Device) != 0)
+                info += "\t      Зарезервирован для будущего использования\n";
+
+            if ((attributes & FileAttributes.Archive) != 0)
+                info += $"\t      {(isFile? "Файл" : "Каталог")} готов для архивирования\n";
+
+            if ((attributes & FileAttributes.NotContentIndexed) == 0)
+                info += $"\t      Содержимое {(isFile? "этого файла" : "файлов этого каталога")} индексируется в дополнение к свойствам файла\n";
+
+            if ((attributes & FileAttributes.Compressed) != 0)
+                info += "\t      Содержимое сжато для экономии места на диске\n";
+
+            if ((attributes & FileAttributes.Encrypted) != 0)
+                info += "\t      Содержимое шифруется для защиты данных\n";
+            
+            
+            CurrentShownInfo = new Info(info, InfoType.FileInfo);
         }
 
         private void Exit(params string[] args)
