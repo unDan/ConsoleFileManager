@@ -125,6 +125,109 @@ namespace ConsoleFileManager.FileManager
             CurrentShownInfo = Info.Empty;
         }
 
+
+        private bool RecursiveFilesCopy(string fromPath, string toPath, bool replaceAllFiles)
+        {
+            var files = Directory.GetFiles(fromPath);
+            var dirs = Directory.GetDirectories(fromPath);
+
+            // if there is no dirs and files in the directory, then go to the previous recursion level
+            // and return value indicating that operation is not aborted
+            if (files.Length == 0 && dirs.Length == 0)
+                return true;
+
+            
+            foreach (var file in files)
+            {
+                var copiedFilePath = Path.Combine(toPath, Path.GetFileName(file));
+                var copyResult = FileOperationDialogResult.TryAgain;
+                var replacementResult = FileOperationDialogResult.Skip;
+
+                
+                // if files are not being replaced automatically then
+                // check file existence until user skips the file or aborts the operation in the dialog
+                if (!replaceAllFiles && File.Exists(copiedFilePath))
+                {
+                    // show dialog to get what to do with current file
+                    copyResult = ShowFileOperationDialog(
+                        "Замена или пропуск файлов",
+                        $"В папке назначения уже есть файл {Path.GetFileName(file)}",
+                        "заменить файл в папке назначения",
+                        "пропустить этот файл",
+                        "прервать операцию"
+                    );
+                    
+                    
+                    // show a stub window so that the user knows that the program is not frozen
+                    CurrentShownInfo = new Info("Подождите... идёт операция копирования.");
+                    ShowInfoWindow("Операция");
+                    
+                    
+                    if (copyResult == FileOperationDialogResult.Skip)
+                        continue;
+                    
+                    if (copyResult == FileOperationDialogResult.Abort)
+                        return false;
+                }
+
+                
+                // if copy result is TryAgain then file should be replaced
+                bool replace = copyResult == FileOperationDialogResult.TryAgain;
+                
+                
+                // try to replace file until file is replaced, or user skips the file, or operation is aborted
+                do
+                {
+                    try
+                    {
+                        File.Copy(file, copiedFilePath, replace);
+                        break;
+                    }
+                    catch (IOException e)
+                    {
+                        // handle exception only if file is occupied by another process
+                        if (e.GetType().IsSubclassOf(typeof(IOException)))
+                            throw;
+                        
+                        replacementResult = ShowFileOperationDialog(
+                            "Файл уже используется",
+                            $"Операция не может быть завершена, так как файл {Path.GetFileName(file)} " +
+                            "открыт в другой программе.\nЗакройте программу и повторите попытку.",
+                            "повторить попытку",
+                            "пропустить этот файл",
+                            "прервать операцию"
+                        );
+
+                        // show a stub window so that the user knows that the program is not frozen
+                        CurrentShownInfo = new Info("Подождите... идёт операция копирования.");
+                        ShowInfoWindow("Операция");
+
+
+                        if (replacementResult == FileOperationDialogResult.Skip)
+                            break;
+
+                        if (replacementResult == FileOperationDialogResult.Abort)
+                            return false;
+                    }
+                } while (replacementResult == FileOperationDialogResult.TryAgain);
+            }
+
+            
+            // recursively copy all files from directories in current directory
+            foreach (var dir in dirs)
+            {
+                var destinationPath = Path.Combine(toPath, Path.GetFileName(dir));
+
+                if (!Directory.Exists(destinationPath))
+                    Directory.CreateDirectory(destinationPath);
+                
+                return RecursiveFilesCopy(dir, destinationPath, replaceAllFiles);
+            }
+
+            
+            return true;
+        }
+        
         
         
         private void Copy(params string[] args)
@@ -136,7 +239,7 @@ namespace ConsoleFileManager.FileManager
 
             string copiedPath;
             string destinationPath;
-            bool replaceFile;
+            bool replaceFiles;
 
             copiedPath = ExtraFunctional.ParsePath(copiedPathArg, CurrentDirectory);
             destinationPath = ExtraFunctional.ParsePath(destinationPathArg, CurrentDirectory);
@@ -178,52 +281,59 @@ namespace ConsoleFileManager.FileManager
             }
 
             // parse extra arg
-            replaceFile = replaceFileArg is null ? false : bool.Parse(replaceFileArg);
+            replaceFiles = replaceFileArg is null ? false : bool.Parse(replaceFileArg);
 
             
             try
             {
-                destinationPath = Path.Combine(destinationPath, Path.GetFileName(copiedPath));
-
-                
                 if (copiedObjIsFile)
                 {
+                    var newFilePath = Path.Combine(destinationPath, Path.GetFileName(copiedPath));
+                    
                     // if file in destination folder exists and no extra arg was specified
                     // then warn the user
-                    if (replaceFileArg is null && File.Exists(destinationPath))
+                    if (replaceFileArg is null && File.Exists(newFilePath))
                     {
                         CurrentShownInfo = new Info(
-                            $"В папке назначения уже есть файл с именем {Path.GetFileName(copiedPath)}.\n" +
+                            $"В папке назначения уже есть файл с именем {Path.GetFileName(newFilePath)}.\n" +
                             "Если вы желаете заменить файл в папке назначения, " +
                             "повторите команду с указанием аргумента замены как true:\n" +
-                            $"cpy \"{copiedPath}\" \"{Path.GetDirectoryName(destinationPath)}\" -rf true\n" +
+                            $"cpy \"{copiedPath}\" \"{destinationPath}\" -rf true\n" +
                             "Если же вы желаете создать в папке назначения ещё один такой же файл, " +
                             "повторите команду с указанием аргумента замены как false:\n" +
-                            $"cpy \"{copiedPath}\" \"{Path.GetDirectoryName(destinationPath)}\" -rf false"
+                            $"cpy \"{copiedPath}\" \"{destinationPath}\" -rf false"
                         );
                         
                         return;
                     }
 
+                    
                     // if replace file arg was specified as false, then create new name for the copied file
-                    if (!replaceFile && File.Exists(destinationPath))
+                    if (!replaceFiles && File.Exists(newFilePath))
                     {
                         var newFileName =  ExtraFunctional.GetCopyFileName(
-                            Path.GetFileNameWithoutExtension(copiedPath),
-                            Path.GetExtension(copiedPath)
+                            newFilePath,
+                            Directory.GetFiles(destinationPath)
                         );
 
-                        destinationPath = Path.Combine(Path.GetDirectoryName(destinationPath), newFileName);
+                        newFilePath = Path.Combine(destinationPath, newFileName);
                     }
                     
-                    File.Copy(copiedPath, destinationPath, replaceFile);
+                    
+                    File.Copy(copiedPath, newFilePath, replaceFiles);
+                    
+                    CurrentShownInfo = Info.Empty;
                 }
                 else
                 {
+                    if (!Directory.Exists(destinationPath))
+                        Directory.CreateDirectory(destinationPath);
                     
+                    // recursively copy all files and dirs to another dir
+                    var copiedSuccessfully = RecursiveFilesCopy(copiedPath, destinationPath, replaceFiles);
+                    
+                    CurrentShownInfo = copiedSuccessfully ? Info.Empty : new Info("Операция копирования была прервана.");
                 }
-                
-                CurrentShownInfo = Info.Empty;
             }
             catch (Exception e)
             {
@@ -418,7 +528,7 @@ namespace ConsoleFileManager.FileManager
                     creationTime = File.GetCreationTime(path);
                     
                     
-                    // get the size of the file and its attributes
+                    // get the size of the directory and its attributes
                     var dirDirsInfo = new List<DirectoryInfo>(new DirectoryInfo(location).GetDirectories());
                     DirectoryInfo dirInfo = dirDirsInfo.Find(dInfo => dInfo.Name == name);
 

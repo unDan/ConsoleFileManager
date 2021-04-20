@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 
@@ -46,23 +47,27 @@ namespace ConsoleFileManager
         }
         
         
-        public static string GetCopyFileName(string fileName, string extension)
+        public static string GetCopyFileName(string filePath, string[] dirFiles)
         {
-            var copyCheckRegex = new Regex(@"( — копия \(\d+\))$");
+            var copies = new List<string>();
             
-            // if file name ends with ' - копия' или ' - копия (число)'
-            if (copyCheckRegex.IsMatch(fileName))
+            var extension = Path.GetExtension(filePath);
+            var fileName = Path.GetFileNameWithoutExtension(filePath);
+            
+            
+            var copyCheckRegex = new Regex($@"({fileName} — копия \(\d+\)){extension}$");
+            
+            
+            // find all copies of this file
+            foreach (var file in dirFiles)
             {
-                var firstDigitIndex = fileName.LastIndexOf('(') + 1;
-                var lastDigitIndex = fileName.LastIndexOf(')') - 1;
-
-                var amount = int.Parse(fileName.Substring(firstDigitIndex, lastDigitIndex - firstDigitIndex + 1));
-                amount++;
-
-                return copyCheckRegex.Replace(fileName, $" — копия ({amount})") + extension;
+                if (copyCheckRegex.IsMatch(file))
+                    copies.Add(Path.GetFileName(file));
             }
-            else
-                return fileName + " — копия (1)" + extension;
+
+            var copyNumber = copies.Count + 1;
+
+            return $"{fileName} — копия ({copyNumber.ToString()}){extension}";
         }
     }
 }

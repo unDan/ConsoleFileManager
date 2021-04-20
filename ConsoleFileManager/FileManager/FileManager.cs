@@ -6,6 +6,13 @@ using System.Text.Json;
 
 namespace ConsoleFileManager.FileManager
 {
+    public enum FileOperationDialogResult
+    {
+        TryAgain,
+        Skip,
+        Abort
+    }
+    
     public partial class FileManager
     {
         private static FileManager instance;
@@ -415,6 +422,44 @@ namespace ConsoleFileManager.FileManager
             DrawWindowBorder();
         }
 
+
+        public FileOperationDialogResult ShowFileOperationDialog(
+            string title,
+            string content, 
+            string enterDescription,
+            string skipDescription,
+            string abortDescription
+        ) {
+            string command = null;
+            FileOperationDialogResult dialogResult;
+
+            while (command != "" && command != "skip" && command != "abort")
+            {
+                Console.Clear();
+            
+                DrawWindowBorder(title);
+            
+                Console.Out.WriteLine($"\n{content}");
+                Console.Out.WriteLine($"> Нажмите Enter, чтобы {enterDescription}.");
+                Console.Out.WriteLine($"> Введите skip, чтобы {skipDescription}.");
+                Console.Out.WriteLine($"> Введите abort, чтобы {abortDescription}.");
+            
+                DrawWindowBorder();
+
+                command = Console.In.ReadLine();
+            }
+            
+            Console.Clear();
+
+            dialogResult = command switch {
+                "" => FileOperationDialogResult.TryAgain,
+                "skip" => FileOperationDialogResult.Skip,
+                "abort" => FileOperationDialogResult.Abort
+            };
+
+            return dialogResult;
+        }
+        
 
         public void Loop()
         {
