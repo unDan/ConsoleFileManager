@@ -77,7 +77,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Converter.cs" />
+    <Compile Include="ExtraFunctional.cs" />
     <Compile Include="FileManager\AppConfig.cs" />
     <Compile Include="FileManager\ConsoleCommand.cs" />
     <Compile Include="FileManager\ErrorLogger.cs" />

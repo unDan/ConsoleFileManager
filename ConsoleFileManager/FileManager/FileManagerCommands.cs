@@ -77,46 +77,7 @@ namespace ConsoleFileManager.FileManager
             command.Execute(args);
 
         }
-
         
-
-        private string ParsePath(string pathToParse, string currentDirectory)
-        {
-            string path;
-            
-            // if path starts do not starts with '\' or '..\' then just add the path to the current directory
-            if (!Path.IsPathRooted(pathToParse) || pathToParse.StartsWith("..\\"))
-                path = (currentDirectory is null) ? null : Path.Combine(currentDirectory, pathToParse);
-            
-            else if (pathToParse.StartsWith("\\"))
-                path = (currentDirectory is null) ? null : Path.Combine(currentDirectory, pathToParse.TrimStart('\\'));
-            
-            else
-                path = pathToParse;
-
-            return path;
-        }
-
-
-        private string CreateCopyFileName(string fileName, string extension)
-        {
-            var copyCheckRegex = new Regex(@"( — копия \(\d+\))$");
-            
-            // if file name ends with ' - копия' или ' - копия (число)'
-            if (copyCheckRegex.IsMatch(fileName))
-            {
-                var firstDigitIndex = fileName.LastIndexOf('(') + 1;
-                var lastDigitIndex = fileName.LastIndexOf(')') - 1;
-
-                var amount = int.Parse(fileName.Substring(firstDigitIndex, lastDigitIndex - firstDigitIndex + 1));
-                amount++;
-
-                return copyCheckRegex.Replace(fileName, $" — копия ({amount})") + extension;
-            }
-            else
-                return fileName + " — копия (1)" + extension;
-        }
-
         
         
         private void GoToDirectory(params string[] args)
@@ -129,7 +90,7 @@ namespace ConsoleFileManager.FileManager
             int pageToShow;
 
 
-            path = ParsePath(pathArg, CurrentDirectory);
+            path = ExtraFunctional.ParsePath(pathArg, CurrentDirectory);
 
             // path can be null only if current directory is null
             if (path is null)
@@ -177,8 +138,8 @@ namespace ConsoleFileManager.FileManager
             string destinationPath;
             bool replaceFile;
 
-            copiedPath = ParsePath(copiedPathArg, CurrentDirectory);
-            destinationPath = ParsePath(destinationPathArg, CurrentDirectory);
+            copiedPath = ExtraFunctional.ParsePath(copiedPathArg, CurrentDirectory);
+            destinationPath = ExtraFunctional.ParsePath(destinationPathArg, CurrentDirectory);
             
             // path can be null only if current directory is null
             if (copiedPath is null)
@@ -247,7 +208,7 @@ namespace ConsoleFileManager.FileManager
                     // if replace file arg was specified as false, then create new name for the copied file
                     if (!replaceFile && File.Exists(destinationPath))
                     {
-                        var newFileName = CreateCopyFileName(
+                        var newFileName =  ExtraFunctional.GetCopyFileName(
                             Path.GetFileNameWithoutExtension(copiedPath),
                             Path.GetExtension(copiedPath)
                         );
@@ -286,7 +247,7 @@ namespace ConsoleFileManager.FileManager
             string path;
             bool recursiveDeletion;
 
-            path = ParsePath(pathArg, CurrentDirectory);
+            path = ExtraFunctional.ParsePath(pathArg, CurrentDirectory);
             
             // path can be null only if current directory is null
             if (path is null)
@@ -353,7 +314,7 @@ namespace ConsoleFileManager.FileManager
             /* Check and parse path to the file */
             var pathArg = args[0];
 
-            string path = ParsePath(pathArg, CurrentDirectory);
+            string path = ExtraFunctional.ParsePath(pathArg, CurrentDirectory);
             
             // path can be null only if current directory is null
             if (path is null)
@@ -418,7 +379,7 @@ namespace ConsoleFileManager.FileManager
                     FileInfo fileInfo = dirFilesInfo.Find(fInfo => fInfo.Name == (name + extension));
                     
                     sizeBytes = fileInfo is null ? -1 : fileInfo.Length;
-                    sizeNormalized = fileInfo is null ? -1 : Converter.GetNormalizedSize(sizeBytes, out sizeType);
+                    sizeNormalized = fileInfo is null ? -1 : ExtraFunctional.GetNormalizedSize(sizeBytes, out sizeType);
                     
                     
                     /* Join all retrieved data to info string */
@@ -467,7 +428,7 @@ namespace ConsoleFileManager.FileManager
                     try
                     {
                         sizeBytes = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(fi => fi.Length);
-                        sizeNormalized = Converter.GetNormalizedSize(sizeBytes, out sizeType);
+                        sizeNormalized = ExtraFunctional.GetNormalizedSize(sizeBytes, out sizeType);
                     }
                     catch (Exception e)
                     {
