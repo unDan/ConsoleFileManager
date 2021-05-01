@@ -103,5 +103,14 @@ namespace ConsoleFileManager.Properties {
                 return ((int)(this["showPageDefault"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("5")]
+        public int emptyInfoWindowHeight {
+            get {
+                return ((int)(this["emptyInfoWindowHeight"]));
+            }
+        }
     }
 }

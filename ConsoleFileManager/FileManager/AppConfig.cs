@@ -19,6 +19,9 @@ namespace ConsoleFileManager.FileManager
         
         /// <summary> The foreground color of the console. </summary>
         public string ForegroundColor { get; set; }
+        
+        /// <summary> The height of the empty info window. </summary>
+        public int EmptyInfoWindowHeight { get; set; }
 
         
         /// <summary>
@@ -30,6 +33,7 @@ namespace ConsoleFileManager.FileManager
             WindowBorderSymbol = Settings.Default.windowBorderSymbolDefault;
             BackgroundColor = Settings.Default.backgroundColorDefault;
             ForegroundColor = Settings.Default.foregroundColorDefault;
+            EmptyInfoWindowHeight = Settings.Default.emptyInfoWindowHeight;
         }
 
 

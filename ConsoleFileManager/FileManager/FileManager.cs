@@ -415,7 +415,7 @@ namespace ConsoleFileManager.FileManager
                 Console.Out.WriteLine($"\n{CurrentShownInfo.Data}\n");
             else
             {
-                for (var i = 0; i < config.FilesPerPage / 3; i++)
+                for (var i = 0; i < config.EmptyInfoWindowHeight; i++)
                     Console.Out.WriteLine("");
             }
             
