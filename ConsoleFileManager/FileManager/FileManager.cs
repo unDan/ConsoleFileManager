@@ -16,6 +16,7 @@ namespace ConsoleFileManager.FileManager
     public partial class FileManager
     {
         private static FileManager instance;
+        private static object syncRoot = new object();
         
         
         /// <summary> The configuration of the application. </summary>
@@ -62,7 +63,12 @@ namespace ConsoleFileManager.FileManager
         public static FileManager GetInstance()
         {
             if (instance is null)
-                instance = new FileManager();
+            {
+                lock (syncRoot)
+                {
+                    instance ??= new FileManager();
+                }
+            }
 
             return instance;
         }
