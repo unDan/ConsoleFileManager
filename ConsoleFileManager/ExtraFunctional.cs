@@ -33,16 +33,36 @@ namespace ConsoleFileManager
         {
             string path;
             
-            // if path starts do not starts with '\' or '..\' then just add the path to the current directory
+            
             if (!Path.IsPathRooted(pathToParse) || pathToParse.StartsWith("..\\"))
                 path = (currentDirectory is null) ? null : Path.Combine(currentDirectory, pathToParse);
-            
             else if (pathToParse.StartsWith("\\"))
                 path = (currentDirectory is null) ? null : Path.Combine(currentDirectory, pathToParse.TrimStart('\\'));
-            
             else
                 path = pathToParse;
 
+
+            if (path is null)
+                return null;
+            
+            
+            // normalize path if it has '..' in it by deleting '..' and part of path before it:
+            // "C:\Users\.." => List["C:", "Users" , ".."] => List["C:"]
+            var pathSeparated = new List<string>(path.Split(new []{'\\'}, StringSplitOptions.RemoveEmptyEntries));
+            
+            while (!pathSeparated.TrueForAll(s => s == "..") && pathSeparated.Count > 0)
+            {
+                var indexOfPathPartToRemove = pathSeparated.FindIndex(s => s == "..") - 1;
+
+                if (indexOfPathPartToRemove < 0)
+                    break;
+                
+                pathSeparated.RemoveRange(indexOfPathPartToRemove, 2);
+            }
+            
+            // join parts of the path to normalized path string
+            path = string.Join("\\", pathSeparated);
+            
             return path;
         }
         
