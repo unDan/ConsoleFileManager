@@ -439,20 +439,39 @@ namespace ConsoleFileManager.FileManager
             string command = null;
             FileOperationDialogResult dialogResult;
 
-            while (command != "" && command != "skip" && command != "abort")
+            while (true)
             {
                 Console.Clear();
             
+                
                 DrawWindowBorder(title);
             
+                
                 Console.Out.WriteLine($"\n{content}");
-                Console.Out.WriteLine($"> Нажмите Enter, чтобы {enterDescription}.");
-                Console.Out.WriteLine($"> Введите skip, чтобы {skipDescription}.");
-                Console.Out.WriteLine($"> Введите abort, чтобы {abortDescription}.");
+                
+                if (!string.IsNullOrEmpty(enterDescription))
+                    Console.Out.WriteLine($"> Нажмите Enter, чтобы {enterDescription}.");
+                
+                if (!string.IsNullOrEmpty(skipDescription))
+                    Console.Out.WriteLine($"> Введите skip, чтобы {skipDescription}.");
+                
+                if (!string.IsNullOrEmpty(abortDescription))
+                    Console.Out.WriteLine($"> Введите abort, чтобы {abortDescription}.");
             
+                
                 DrawWindowBorder();
 
+                
                 command = Console.In.ReadLine();
+                
+                if (!string.IsNullOrEmpty(enterDescription) && command == "")
+                    break;
+
+                if (!string.IsNullOrEmpty(skipDescription) && command == "skip")
+                    break;
+                
+                if (!string.IsNullOrEmpty(abortDescription) && command == "abort")
+                    break;
             }
             
             Console.Clear();
