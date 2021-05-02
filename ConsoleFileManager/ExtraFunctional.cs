@@ -69,5 +69,22 @@ namespace ConsoleFileManager
 
             return $"{fileName} — копия ({copyNumber.ToString()}){extension}";
         }
+
+
+        public static bool IsDrive(string path)
+        {
+            string driveName = path.TrimEnd('\\');
+            
+            if (driveName.Length == 2 && driveName[1] == ':')
+                return char.IsLetter(driveName[0]);
+
+            return false;
+        }
+
+
+        public static bool IsFile(string path)
+        {
+            return Path.HasExtension(path);
+        }
     }
 }

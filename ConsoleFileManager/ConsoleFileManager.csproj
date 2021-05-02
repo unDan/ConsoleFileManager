@@ -83,6 +83,7 @@
     <Compile Include="FileManager\ErrorLogger.cs" />
     <Compile Include="FileManager\FileManager.cs" />
     <Compile Include="FileManager\FileManagerCommands.cs" />
+    <Compile Include="FileManager\FileManagerCommandsMethods.cs" />
     <Compile Include="FileManager\Info.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
