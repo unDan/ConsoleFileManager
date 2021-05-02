@@ -344,8 +344,7 @@ namespace ConsoleFileManager.FileManager
             
             
             /* Get info */
-            var isFile = ExtraFunctional.IsFile(path);
-            string info;
+            string info = "";
             
             // main information
             string name;
@@ -353,10 +352,8 @@ namespace ConsoleFileManager.FileManager
             string location;
 
             // size information
-            string sizeType = "";
-            double sizeBytes;
-            double sizeNormalized;
-                
+            long sizeBytes;
+
             // time information
             DateTime creationTime;
             DateTime lastChangeTime;
@@ -366,59 +363,45 @@ namespace ConsoleFileManager.FileManager
 
             try
             {
-                if (isFile)
+                if (ExtraFunctional.IsDrive(path))
                 {
-                    attributes = File.GetAttributes(path);
-
-                    
+                    var driveInfo = new DriveInfo(path);
+                    info = CreateDriveInfo(driveInfo);
+                }
+                else if (ExtraFunctional.IsFile(path))
+                {
+                    /* Collect main informaintion*/
                     name = Path.GetFileNameWithoutExtension(path);
                     extension = Path.GetExtension(path);
                     location = Path.GetDirectoryName(path);
+
+                    attributes = File.GetAttributes(path);
                 
-                    
-                    creationTime = File.GetCreationTime(path);
-                    lastChangeTime = File.GetLastWriteTime(path);
-                    lastOpenedTime = File.GetLastAccessTime(path);
-                    
                     
                     /* Try to get the size of the file */
                     var dirFilesInfo = new List<FileInfo>(new DirectoryInfo(location).GetFiles());
                     FileInfo fileInfo = dirFilesInfo.Find(fInfo => fInfo.Name == (name + extension));
                     
                     sizeBytes = fileInfo is null ? -1 : fileInfo.Length;
-                    sizeNormalized = fileInfo is null ? -1 : ExtraFunctional.GetNormalizedSize(sizeBytes, out sizeType);
-                    
-                    
-                    /* Join all retrieved data to info string */
-                    string sizeNormStr;
-                    string sizeBytesStr;
 
-                    if (sizeBytes >= 0d)
-                    {
-                        sizeNormStr = sizeNormalized.ToString(CultureInfo.CurrentCulture) + " " + sizeType;
-                        sizeBytesStr = sizeBytes.ToString(CultureInfo.CurrentCulture) + " байт";
-                    }
-                    else
-                    {
-                        sizeNormStr = "неизвестно";
-                        sizeBytesStr = "незивестно";
-                    }
+                    
+                    /* Create info string */
+                    info = CreateFileInfo(
+                        name,
+                        extension,
+                        location,
+                        sizeBytes,
+                        File.GetCreationTime(path),
+                        File.GetLastWriteTime(path),
+                        File.GetLastAccessTime(path),
+                        attributes
+                    );
 
-                    info =
-                        $"Имя:          {name}\n" +
-                        $"Тип:          Файл ({extension})\n" +
-                        $"Расположение: {location}\n" +
-                        $"Размер:       {sizeNormStr} ({sizeBytesStr})\n" +
-                        $"Создан:       {creationTime.ToString(CultureInfo.CurrentCulture)}\n" +
-                        $"Изменен:      {lastChangeTime.ToString(CultureInfo.CurrentCulture)}\n" +
-                        $"Открыт:       {lastOpenedTime.ToString(CultureInfo.CurrentCulture)}\n" +
-                        "\n" +
-                        "Атрибуты:\n";
                 }
                 else
                 {
                     name = Path.GetFileNameWithoutExtension(path);
-                    location = ExtraFunctional.IsDrive(path) ? path : Path.GetDirectoryName(path);
+                    location = Path.GetDirectoryName(path);
                 
                     
                     // get time info
@@ -431,51 +414,24 @@ namespace ConsoleFileManager.FileManager
 
                     attributes = dirInfo.Attributes;
                     
-
-                    try
-                    {
-                        sizeBytes = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(fi => fi.Length);
-                        sizeNormalized = ExtraFunctional.GetNormalizedSize(sizeBytes, out sizeType);
-                    }
-                    catch (Exception e)
-                    {
-                        ErrorLogger.LogError(e);
-                        sizeBytes = -1;
-                        sizeNormalized = -1;
-                    }
+                    sizeBytes = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(fi => fi.Length);
                     
-                
-                    // create info string
-                    string sizeNormStr;
-                    string sizeBytesStr;
-
-                    if (sizeBytes >= 0d)
-                    {
-                        sizeNormStr = sizeNormalized.ToString(CultureInfo.CurrentCulture) + " " + sizeType;
-                        sizeBytesStr = sizeBytes.ToString(CultureInfo.CurrentCulture) + " байт";
-                    }
-                    else
-                    {
-                        sizeNormStr = "неизвестно";
-                        sizeBytesStr = "неизвестно";
-                    }
                     
-
-                    info =
-                        $"Имя:          {name}\n" +
-                        $"Тип:          Папка с файлами\n" +
-                        $"Расположение: {location}\n" +
-                        $"Размер:       {sizeNormStr} ({sizeBytesStr})\n" +
-                        $"Создан:       {creationTime.ToString(CultureInfo.CurrentCulture)}\n" +
-                        "\n" +
-                        "Атрибуты:\n";
+                    /* Create info string */
+                    info = CreateDirInfo(
+                        name,
+                        location,
+                        sizeBytes,
+                        dirInfo.CreationTime,
+                        attributes
+                    );
                 }
             }
             catch (Exception e)
             {
                 ErrorLogger.LogError(e);
 
-                var type = isFile ? "файле" : "папке";
+                var type = ExtraFunctional.IsDrive(path) ? "диске" : (ExtraFunctional.IsFile(path) ? "файле" : "папке");
                 
                 CurrentShownInfo = new Info(
                     $"Произошла ошибка при попытке получить информацию о {type}: {e.Message}",
@@ -484,40 +440,8 @@ namespace ConsoleFileManager.FileManager
                 
                 return;
             }
-            
-            
-            /* Check attributes and add them to the info string */
-            if ((attributes & FileAttributes.ReadOnly) != 0) 
-                info += $"\t      Только для чтения{(isFile? "" : " (применимо только к файлам в каталоге)")}\n";
-                
-            if ((attributes & FileAttributes.Hidden) != 0) 
-                info += "\t      Скрытый\n";
 
-            if (isFile && (attributes & FileAttributes.Temporary) != 0)
-                info += "\t      Временный файл\n";
 
-            if (isFile && (attributes & FileAttributes.System) != 0)
-                info += "\t      Системный файл\n";
-            
-            if (!isFile && (attributes & FileAttributes.Directory) != 0)
-                info += "\t      Каталог\n";
-
-            if ((attributes & FileAttributes.Device) != 0)
-                info += "\t      Зарезервирован для будущего использования\n";
-
-            if ((attributes & FileAttributes.Archive) != 0)
-                info += $"\t      {(isFile? "Файл" : "Каталог")} готов для архивирования\n";
-
-            if ((attributes & FileAttributes.NotContentIndexed) == 0)
-                info += $"\t      Содержимое {(isFile? "этого файла" : "файлов этого каталога")} индексируется в дополнение к свойствам файла\n";
-
-            if ((attributes & FileAttributes.Compressed) != 0)
-                info += "\t      Содержимое сжато для экономии места на диске\n";
-
-            if ((attributes & FileAttributes.Encrypted) != 0)
-                info += "\t      Содержимое шифруется для защиты данных\n";
-            
-            
             CurrentShownInfo = new Info(info, InfoType.FileInfo);
         }
 
