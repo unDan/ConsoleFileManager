@@ -226,6 +226,12 @@ namespace ConsoleFileManager.FileManager
                     if (!Directory.Exists(destinationPath))
                         Directory.CreateDirectory(destinationPath);
                     
+                    
+                    // show a stub window so that the user knows that the program is not frozen
+                    CurrentShownInfo = new Info("Идёт операция копирования файлов. Пожалуйста, подождите...");
+                    ShowInfoWindow("Операция");
+                    
+                    
                     // recursively copy all files and dirs to another dir
                     var copiedSuccessfully = RecursiveFilesCopy(copiedPath, destinationPath, replaceFiles);
                     
