@@ -54,7 +54,7 @@ Each command, except 'exit' has one or more required arguments (most commonly th
 #### del
 1. Using: `del "<path_to_object_to_delete>" [-r true]`
 2. Arguments:<br/>
-&nbsp;&nbsp; `"<path_to_object_to_delete>` - the path to the object (file or folder) you want to delete. <br/>
+&nbsp;&nbsp; `"<path_to_object_to_delete>"` - the path to the object (file or folder) you want to delete. <br/>
 &nbsp;&nbsp; `-r true` - must be specified to allow recursive deletion if you want to delete folder that is not empty.
 3. Examples: <br/>
 &nbsp;&nbsp; `del "C:\Test"` - if folder is empty it will be deleted; if not - you will be asked to specifiy the `-r true` argument. <br/>
@@ -68,7 +68,7 @@ Each command, except 'exit' has one or more required arguments (most commonly th
 #### info
 1. Using: `info "<path_to_object>"`
 2. Arguments:<br/>
-&nbsp;&nbsp; `"<path_to_object>` - the path to the object (file or folder) you want to show information about. <br/>
+&nbsp;&nbsp; `"<path_to_object>"` - the path to the object (file or folder) you want to show information about. <br/>
 3. Examples: <br/>
 &nbsp;&nbsp; `info "C:\Test"`<br/>
 &nbsp;&nbsp; `info "C:\Test\test.pdf"`<br/>
