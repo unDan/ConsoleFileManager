@@ -176,7 +176,7 @@ namespace ConsoleFileManager.FileManager
                  $"Имя:          {name}\n" +
                  $"Тип:          Файл ({extension})\n" +
                  $"Расположение: {location}\n" +
-                 $"Размер:       {sizeStr})\n" +
+                 $"Размер:       {sizeStr}\n" +
                  $"Создан:       {creationTimeStr}\n" +
                  $"Изменен:      {lastChangeTimeStr}\n" +
                  $"Открыт:       {lastOpenTimeStr}\n" +
@@ -190,11 +190,22 @@ namespace ConsoleFileManager.FileManager
          private string CreateDirInfo(string name, string location, long sizeInBytes, DateTime creationTime,
              FileAttributes attributes)
          {
-             var sizeInBytesStr = sizeInBytes.ToString(CultureInfo.CurrentCulture) + " байт";
-             var sizeNormalizedStr = ExtraFunctional.GetNormalizedSize(sizeInBytes, out var type).ToString(CultureInfo.CurrentCulture) + $" {type}";
+             string sizeStr;
+
+             if (sizeInBytes >= 0)
+             {
+                 var sizeInBytesStr = sizeInBytes.ToString(CultureInfo.CurrentCulture) + " байт";
+                 var sizeNormalizedStr =
+                     ExtraFunctional.GetNormalizedSize(sizeInBytes, out var type).ToString(CultureInfo.CurrentCulture) +
+                     $" {type}";
+
+                 sizeStr = sizeNormalizedStr + " (" + sizeInBytesStr + ")";
+             }
+             else
+                 sizeStr = "Неизвестно";
+             
 
              var creationTimeStr = creationTime.ToString(CultureInfo.CurrentCulture);
-
              var attributesStr = GetAttributesInfo(attributes, true);
              
              
@@ -202,7 +213,7 @@ namespace ConsoleFileManager.FileManager
                  $"Имя:          {name}\n" +
                   "Тип:          Папка с файлами\n" +
                  $"Расположение: {location}\n" +
-                 $"Размер:       {sizeNormalizedStr} ({sizeInBytesStr})\n" +
+                 $"Размер:       {sizeStr}\n" +
                  $"Создан:       {creationTimeStr}\n" +
                  "\n" +
                  $"Атрибуты:\n{attributesStr}";

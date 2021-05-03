@@ -323,6 +323,7 @@ namespace ConsoleFileManager.FileManager
 
             string path = ExtraFunctional.ParsePath(pathArg, CurrentDirectory);
             
+            
             // path can be null only if current directory is null
             if (path is null)
             {
@@ -344,7 +345,7 @@ namespace ConsoleFileManager.FileManager
             
             
             /* Get info */
-            string info = "";
+            string info;
             
             // main information
             string name;
@@ -353,14 +354,10 @@ namespace ConsoleFileManager.FileManager
 
             // size information
             long sizeBytes;
-
-            // time information
-            DateTime creationTime;
-            DateTime lastChangeTime;
-            DateTime lastOpenedTime;
-                
+            
             FileAttributes attributes;
 
+            
             try
             {
                 if (ExtraFunctional.IsDrive(path))
@@ -370,7 +367,7 @@ namespace ConsoleFileManager.FileManager
                 }
                 else if (ExtraFunctional.IsFile(path))
                 {
-                    /* Collect main informaintion*/
+                    /* Collect main information */
                     name = Path.GetFileNameWithoutExtension(path);
                     extension = Path.GetExtension(path);
                     location = Path.GetDirectoryName(path);
@@ -379,10 +376,29 @@ namespace ConsoleFileManager.FileManager
                 
                     
                     /* Try to get the size of the file */
-                    var dirFilesInfo = new List<FileInfo>(new DirectoryInfo(location).GetFiles());
-                    FileInfo fileInfo = dirFilesInfo.Find(fInfo => fInfo.Name == (name + extension));
+                    try
+                    {
+                        var dirFilesInfo = new List<FileInfo>(new DirectoryInfo(location).GetFiles());
+                        FileInfo fileInfo = dirFilesInfo.Find(fInfo => fInfo.Name == (name + extension));
                     
-                    sizeBytes = fileInfo is null ? -1 : fileInfo.Length;
+                        sizeBytes = fileInfo.Length;
+                    }
+                    catch (Exception e)
+                    {
+                        // exception will be thrown only if app has no rights to access the file or folder
+                        // in that case just warn the user about it and show the size of the file as 'Неизвестно'
+                        
+                        sizeBytes = -1;
+
+                        ShowFileOperationDialog(
+                            "Отказано в доступе к файлу",
+                            "У приложения отсутствуют необходимые права для получения информации о размерах" +
+                            $" файла {name}{extension}. Размер файла будет указан, как \"Неизвестно\".",
+                            "продолжить",
+                            null,
+                            null
+                        );
+                    }
 
                     
                     /* Create info string */
@@ -396,25 +412,48 @@ namespace ConsoleFileManager.FileManager
                         File.GetLastAccessTime(path),
                         attributes
                     );
-
                 }
                 else
                 {
                     name = Path.GetFileNameWithoutExtension(path);
                     location = Path.GetDirectoryName(path);
-                
-                    
-                    // get time info
-                    creationTime = File.GetCreationTime(path);
                     
                     
-                    // get the size of the directory and its attributes
+                    /* Try to get the size of the directory and its attributes */
                     var dirDirsInfo = new List<DirectoryInfo>(new DirectoryInfo(location).GetDirectories());
                     DirectoryInfo dirInfo = dirDirsInfo.Find(dInfo => dInfo.Name == name);
 
                     attributes = dirInfo.Attributes;
+
                     
-                    sizeBytes = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(fi => fi.Length);
+                    // show info window to let user know that application is not frozen
+                    Console.Clear();
+                    CurrentShownInfo = new Info(
+                        "Выполняется вычисление размера папки. Пожалуйста, подождите..."
+                    );
+                    ShowInfoWindow("Вычисление размера папки");
+                    
+                    
+                    try
+                    {
+                        sizeBytes = dirInfo.EnumerateFiles("*", SearchOption.AllDirectories).Sum(fi => fi.Length);
+                    }
+                    catch (Exception e)
+                    {
+                        // exception will be thrown only if app has no rights to access the file or folder
+                        // in that case just warn the user about it and show the size of the file as 'Неизвестно'
+                        
+                        sizeBytes = -1;
+
+                        ShowFileOperationDialog(
+                            "Отказано в доступе к файлу",
+                            "У приложения отсутствуют необходимые права для получения информации о размерах" +
+                            $" папки {name}. Размер папки будет указан, как \"Неизвестно\".",
+                            "продолжить",
+                            null,
+                            null
+                        );
+                    }
                     
                     
                     /* Create info string */

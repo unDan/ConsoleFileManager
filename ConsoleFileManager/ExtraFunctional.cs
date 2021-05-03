@@ -34,34 +34,53 @@ namespace ConsoleFileManager
             string path;
             
             
-            if (!Path.IsPathRooted(pathToParse) || pathToParse.StartsWith("..\\"))
+            /* Check whether the path is relative path and transform it to an absolute path*/
+            if (!Path.IsPathRooted(pathToParse)) // if path is relative
                 path = (currentDirectory is null) ? null : Path.Combine(currentDirectory, pathToParse);
-            else if (pathToParse.StartsWith("\\"))
+            
+            else if (pathToParse.StartsWith("\\")) // also if path is relative but starts not with folder/file name but with slash
                 path = (currentDirectory is null) ? null : Path.Combine(currentDirectory, pathToParse.TrimStart('\\'));
-            else
+            
+            else if (pathToParse.Length == 2 && pathToParse[1] == ':') // special case: if whole path is a drive letter + ':'
+                return pathToParse + '\\';
+            
+            else // if path is absolute
                 path = pathToParse;
 
 
+            
+            // the path will be null only if current directory is null and path to parse is a relative path
             if (path is null)
                 return null;
             
             
-            // normalize path if it has '..' in it by deleting '..' and part of path before it:
-            // "C:\Users\.." => List["C:", "Users" , ".."] => List["C:"]
+            
+            /* Normalize path having '..' to resulting absolute path */
+            // "C:\Users\.." => List["C:", "Users" , ".."] => List["C:"] => "C:\"
             var pathSeparated = new List<string>(path.Split(new []{'\\'}, StringSplitOptions.RemoveEmptyEntries));
             
-            while (!pathSeparated.TrueForAll(s => s == "..") && pathSeparated.Count > 0)
+            while (pathSeparated.Count > 0)
             {
                 var indexOfPathPartToRemove = pathSeparated.FindIndex(s => s == "..") - 1;
 
+                if (pathSeparated.TrueForAll(s => s == ".."))
+                    return "";
+                
                 if (indexOfPathPartToRemove < 0)
                     break;
                 
                 pathSeparated.RemoveRange(indexOfPathPartToRemove, 2);
             }
             
-            // join parts of the path to normalized path string
+            
+            /* Join parts of the path to result path string */
             path = string.Join("\\", pathSeparated);
+
+            // if path not empty then its a normal path, so add a slash to the end of this path
+            // this condition is most needed in case if path is drive letter and ':' only
+            if (path.Length > 0)
+                path += '\\';
+
             
             return path;
         }
