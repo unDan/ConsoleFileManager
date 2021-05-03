@@ -183,10 +183,10 @@ namespace ConsoleFileManager.FileManager
             
             try
             {
+                var newFilePath = Path.Combine(destinationPath, Path.GetFileName(copiedPath));
+                
                 if (copiedObjIsFile)
                 {
-                    var newFilePath = Path.Combine(destinationPath, Path.GetFileName(copiedPath));
-                    
                     // if file in destination folder exists and no extra arg was specified
                     // then warn the user
                     if (replaceFileArg is null && File.Exists(newFilePath))
@@ -223,8 +223,10 @@ namespace ConsoleFileManager.FileManager
                 }
                 else
                 {
-                    if (!Directory.Exists(destinationPath))
-                        Directory.CreateDirectory(destinationPath);
+                    var newDirPath = Path.Combine(destinationPath, Path.GetFileName(copiedPath));
+                    
+                    if (!Directory.Exists(newDirPath))
+                        Directory.CreateDirectory(newDirPath);
                     
                     
                     // show a stub window so that the user knows that the program is not frozen
@@ -233,7 +235,7 @@ namespace ConsoleFileManager.FileManager
                     
                     
                     // recursively copy all files and dirs to another dir
-                    var copiedSuccessfully = RecursiveFilesCopy(copiedPath, destinationPath, replaceFiles);
+                    var copiedSuccessfully = RecursiveFilesCopy(copiedPath, newDirPath, replaceFiles);
                     
                     CurrentShownInfo = copiedSuccessfully ? Info.Empty : new Info("Операция копирования была прервана.");
                 }
