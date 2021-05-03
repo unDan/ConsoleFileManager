@@ -75,10 +75,9 @@ namespace ConsoleFileManager
             
             /* Join parts of the path to result path string */
             path = string.Join("\\", pathSeparated);
-
-            // if path not empty then its a normal path, so add a slash to the end of this path
-            // this condition is most needed in case if path is drive letter and ':' only
-            if (path.Length > 0)
+            
+            // special case: if path is drive letter and ':' only
+            if (path.Length == 2 && path[1] == ':')
                 path += '\\';
 
             
