@@ -428,7 +428,20 @@ namespace ConsoleFileManager.FileManager
             DrawWindowBorder();
         }
 
+        
 
+        /// <summary>
+        /// Show a dialog window with specified title and information. The dialog can have up to 3 different options
+        /// for user to choose. <para/>
+        /// Dialog window asks for user's response until they enter one of the suggested options. After user enters
+        /// one of the suggested options, user's response is returned as result.
+        /// </summary>
+        /// <param name="title">The title of the dialog window.</param>
+        /// <param name="content">The information displayed in the dialog window.</param>
+        /// <param name="enterDescription">The description for the 'Press Enter' option.</param>
+        /// <param name="skipDescription">The description for the 'Enter skip' option.</param>
+        /// <param name="abortDescription">The description for the 'Enter abort' option.</param>
+        /// <returns>The user's response - try operation again / skip the object / abort operation. </returns>
         public FileOperationDialogResult ShowFileOperationDialog(
             string title,
             string content, 
@@ -486,6 +499,10 @@ namespace ConsoleFileManager.FileManager
         }
         
 
+        /// <summary>
+        /// The main method of the File Manager providing the showing of file structure, information,
+        /// getting commands from user and executing them.
+        /// </summary>
         public void Loop()
         {
             while (true)

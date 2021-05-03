@@ -321,6 +321,11 @@ namespace ConsoleFileManager.FileManager
         }
 
 
+         /// <summary>
+         /// Create a string with information about attributes of file or directory.
+         /// </summary>
+         /// <param name="attributes">The attributes of the file or directory.</param>
+         /// <param name="isFile">The value indicating whether the specified attributes are file attributes or directory attributes.</param>
          private string GetAttributesInfo(FileAttributes attributes, bool isFile)
          {
              var attributesInfo = "";
@@ -359,6 +364,18 @@ namespace ConsoleFileManager.FileManager
          }
          
 
+         
+         /// <summary>
+         /// Create a string with information about the file from the specified values.
+         /// </summary>
+         /// <param name="name">The name of the file.</param>
+         /// <param name="extension">The extension of the file.</param>
+         /// <param name="location">The location of the file.</param>
+         /// <param name="sizeInBytes">The size of the file in bytes.</param>
+         /// <param name="creationTime">The time when the file was created.</param>
+         /// <param name="lastChangeTime">The time when the file was last changed.</param>
+         /// <param name="lastOpenTime">The time when the file was last opened.</param>
+         /// <param name="attributes">The attributes of the file.</param>
          private string CreateFileInfo(string name, string extension, string location, long sizeInBytes, 
              DateTime creationTime, DateTime lastChangeTime, DateTime lastOpenTime, FileAttributes attributes)
          {
@@ -399,6 +416,15 @@ namespace ConsoleFileManager.FileManager
          }
 
 
+         
+         /// <summary>
+         /// Create a string with information about directory from the specified values.
+         /// </summary>
+         /// <param name="name">The name of the directory.</param>
+         /// <param name="location">The location of the directory.</param>
+         /// <param name="sizeInBytes">The size of the directory in bytes.</param>
+         /// <param name="creationTime">The time when the directory was created.</param>
+         /// <param name="attributes">The attributes of the directory.</param>
          private string CreateDirInfo(string name, string location, long sizeInBytes, DateTime creationTime,
              FileAttributes attributes)
          {
@@ -434,6 +460,11 @@ namespace ConsoleFileManager.FileManager
          }
 
 
+         
+         /// <summary>
+         /// Create a string with information about the drive from the specified drive info.
+         /// </summary>
+         /// <param name="driveInfo">The information about the drive.</param>
          private string CreateDriveInfo(DriveInfo driveInfo)
          {
              string driveType = driveInfo.DriveType switch {

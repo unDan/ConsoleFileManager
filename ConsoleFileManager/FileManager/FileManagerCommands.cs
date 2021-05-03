@@ -295,7 +295,7 @@ namespace ConsoleFileManager.FileManager
                     if (Directory.GetFileSystemEntries(path).Length != 0 && recursiveDeletion == false)
                     {
                         CurrentShownInfo = new Info(
-                            "Указанная директория не пуста. Если вы желаете удалить папку вместе со всем её" +
+                            "Указанная директория не пуста. Если вы желаете удалить папку вместе со всем её " +
                             "содержимым, повторите команду, указав аргумент рекурсивного удаления:\n" +
                             $"del \"{path}\" -r true"
                         );

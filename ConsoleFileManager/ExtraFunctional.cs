@@ -5,8 +5,17 @@ using System.Text.RegularExpressions;
 
 namespace ConsoleFileManager
 {
+    /// <summary>
+    /// Wrapper for the extra functions used in FileManager but no related to its functional.
+    /// </summary>
     public static class ExtraFunctional
     {
+        /// <summary>
+        /// Converts the given amount of bytes to the highest unit of digital information
+        /// having the least value that is greater then 1.
+        /// </summary>
+        /// <param name="bytes">The amount of bytes to convert.</param>
+        /// <param name="type">The unit of digital information corresponding to the resulting value.</param>
         public static double GetNormalizedSize(double bytes, out string type)
         {
             const int CONVERSION_VALUE = 1024;
@@ -29,6 +38,12 @@ namespace ConsoleFileManager
         }
         
         
+        
+        /// <summary>
+        /// Transform the specified relative path to absolute path.
+        /// </summary>
+        /// <param name="pathToParse">Path that is needed to be transformed.</param>
+        /// <param name="currentDirectory">The absolute path to transform the relative path to.</param>
         public static string ParsePath(string pathToParse, string currentDirectory)
         {
             string path;
@@ -85,6 +100,11 @@ namespace ConsoleFileManager
         }
         
         
+        /// <summary>
+        /// Create a name for copied file by adding the suffix and order number of copy.
+        /// </summary>
+        /// <param name="filePath">The path to file that will be copied.</param>
+        /// <param name="dirFiles">All files from the directory where the file will be copied to.</param>
         public static string GetCopyFileName(string filePath, string[] dirFiles)
         {
             var copies = new List<string>();
@@ -109,6 +129,12 @@ namespace ConsoleFileManager
         }
 
 
+        /// <summary>
+        /// Check if the specified path is a path to drive.
+        /// </summary>
+        /// <param name="path">The path to check.</param>
+        /// <returns>True - if the path is a path to drive.
+        /// False - if the path is a path to file or directory.</returns>
         public static bool IsDrive(string path)
         {
             string driveName = path.TrimEnd('\\');
@@ -120,6 +146,12 @@ namespace ConsoleFileManager
         }
 
 
+        /// <summary>
+        /// Check if the specified path is a path to file.
+        /// </summary>
+        /// <param name="path">The path to check.</param>
+        /// <returns>True - if the path is the path to file.
+        /// False - if the path is a path to directory or drive.</returns>
         public static bool IsFile(string path)
         {
             return Path.HasExtension(path);
