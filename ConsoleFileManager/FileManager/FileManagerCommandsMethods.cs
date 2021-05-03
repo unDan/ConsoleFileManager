@@ -6,17 +6,57 @@ namespace ConsoleFileManager.FileManager
 {
     public partial class FileManager
     {
-         private bool RecursiveFilesCopy(string fromPath, string toPath, bool replaceAllFiles)
+        /// <summary>
+        /// Recursively copy all files from specified directory to specified directory. <para/>
+        /// This method calls itself on each directory in the specified directory.
+        /// </summary>
+        /// <param name="fromPath">The path to the directory to copy files from.</param>
+        /// <param name="toPath">The path to the directory to copy files to.</param>
+        /// <param name="replaceAllFiles">The value indicating whether the dialog window should be shown if
+        /// file with the same name exists in destination directory.</param>
+        /// <returns>True - if operation was successful. False - if operation was aborted. </returns>
+        private bool RecursiveFilesCopy(string fromPath, string toPath, bool replaceAllFiles)
         {
-            var files = Directory.GetFiles(fromPath);
-            var dirs = Directory.GetDirectories(fromPath);
+            string[] files = null;
+            string[] dirs = null;
 
+
+            /* Try to get files and directories from current directory */
+            try
+            {
+                files = Directory.GetFiles(fromPath);
+                dirs = Directory.GetDirectories(fromPath);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                var directoryAccessResult = ShowFileOperationDialog(
+                    "Отсутствуют права доступа",
+                    $"Операция не может быть завершена, так отсутствуют права доступа к папке {Path.GetFileName(fromPath)}.",
+                    null,
+                    "пропустить эту папку",
+                    "прервать операцию"
+                );
+
+                // show a stub window so that the user knows that the program is not frozen
+                CurrentShownInfo = new Info("Идёт операция удаления файлов. Пожалуйста, подождите...");
+                ShowInfoWindow("Операция");
+
+
+                if (directoryAccessResult == FileOperationDialogResult.Skip)
+                    return true;
+
+                if (directoryAccessResult == FileOperationDialogResult.Abort)
+                    return false;
+            }
+
+            
             // if there is no dirs and files in the directory, then go to the previous recursion level
             // and return value indicating that operation is not aborted
             if (files.Length == 0 && dirs.Length == 0)
                 return true;
 
             
+            /* Copy all files from current directory */
             foreach (var file in files)
             {
                 var copiedFilePath = Path.Combine(toPath, Path.GetFileName(file));
@@ -39,7 +79,7 @@ namespace ConsoleFileManager.FileManager
                     
                     
                     // show a stub window so that the user knows that the program is not frozen
-                    CurrentShownInfo = new Info("Подождите... идёт операция копирования.");
+                    CurrentShownInfo = new Info("Идёт операция копирования файлов. Пожалуйста, подождите...");
                     ShowInfoWindow("Операция");
                     
                     
@@ -79,7 +119,7 @@ namespace ConsoleFileManager.FileManager
                         );
 
                         // show a stub window so that the user knows that the program is not frozen
-                        CurrentShownInfo = new Info("Подождите... идёт операция копирования.");
+                        CurrentShownInfo = new Info("Идёт операция копирования файлов. Пожалуйста, подождите...");
                         ShowInfoWindow("Операция");
 
 
@@ -93,7 +133,7 @@ namespace ConsoleFileManager.FileManager
             }
 
             
-            // recursively copy all files from directories in current directory
+            /* Recursively copy all files from directories in current directory */
             foreach (var dir in dirs)
             {
                 var destinationPath = Path.Combine(toPath, Path.GetFileName(dir));
@@ -101,9 +141,181 @@ namespace ConsoleFileManager.FileManager
                 if (!Directory.Exists(destinationPath))
                     Directory.CreateDirectory(destinationPath);
                 
-                return RecursiveFilesCopy(dir, destinationPath, replaceAllFiles);
+                bool copiedSuccessfully = RecursiveFilesCopy(dir, destinationPath, replaceAllFiles);
+
+                if (!copiedSuccessfully)
+                    return false;
+            }
+            
+            return true;
+        }
+        
+        
+        
+        /// <summary>
+        /// Recursively delete all files in specified directory.
+        /// </summary>
+        /// <param name="dirPath">The path to the directory to delete files from.</param>
+        /// <returns>True - if operation was successful. False - if operation was aborted. </returns>
+        private bool RecursiveFilesDeletion(string dirPath)
+        {
+            string[] files = null;
+            string[] dirs = null;
+
+
+            /* Try to get files and directories from current directory */
+            try
+            {
+                files = Directory.GetFiles(dirPath);
+                dirs = Directory.GetDirectories(dirPath);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                var directoryAccessResult = ShowFileOperationDialog(
+                    "Отсутствуют права доступа",
+                    $"Операция не может быть завершена, так отсутствуют права доступа к папке {Path.GetFileName(dirPath)}.",
+                    null,
+                    "пропустить эту папку",
+                    "прервать операцию"
+                );
+
+                // show a stub window so that the user knows that the program is not frozen
+                CurrentShownInfo = new Info("Идёт операция удаления файлов. Пожалуйста, подождите...");
+                ShowInfoWindow("Операция");
+
+
+                if (directoryAccessResult == FileOperationDialogResult.Skip)
+                    return true;
+
+                if (directoryAccessResult == FileOperationDialogResult.Abort)
+                    return false;
             }
 
+
+            // if there is no dirs and files in the directory, then go to the previous recursion level
+            // and return value indicating that operation is not aborted
+            if (files.Length == 0 && dirs.Length == 0)
+                return true;
+
+            
+            /* Delete all files from current directory */
+            foreach (var file in files)
+            {
+                FileOperationDialogResult deletionResult;
+                
+                // try to delete file until file is deleted, or user skips the file, or operation is aborted
+                do
+                {
+                    try
+                    {
+                        File.Delete(file);
+                        break;
+                    }
+                    catch (IOException e)
+                    {
+                        // handle exception only if file is occupied by another process
+                        if (e.GetType().IsSubclassOf(typeof(IOException)))
+                            throw;
+
+                        deletionResult = ShowFileOperationDialog(
+                            "Файл уже используется",
+                            $"Операция не может быть завершена, так как файл {Path.GetFileName(file)} " +
+                            "открыт в другой программе.\nЗакройте программу и повторите попытку.",
+                            "повторить попытку",
+                            "пропустить этот файл",
+                            "прервать операцию"
+                        );
+
+                        // show a stub window so that the user knows that the program is not frozen
+                        CurrentShownInfo = new Info("Идёт операция удаления файлов. Пожалуйста, подождите...");
+                        ShowInfoWindow("Операция");
+
+
+                        if (deletionResult == FileOperationDialogResult.Skip)
+                            break;
+
+                        if (deletionResult == FileOperationDialogResult.Abort)
+                            return false;
+                    }
+                    catch (UnauthorizedAccessException)
+                    {
+                        deletionResult = ShowFileOperationDialog(
+                            "Отсутствуют права доступа",
+                            $"Операция не может быть завершена, так отсутствуют права доступа к файлу {Path.GetFileName(file)}.",
+                            null,
+                            "пропустить этот файл",
+                            "прервать операцию"
+                        );
+
+                        // show a stub window so that the user knows that the program is not frozen
+                        CurrentShownInfo = new Info("Идёт операция удаления файлов. Пожалуйста, подождите...");
+                        ShowInfoWindow("Операция");
+
+
+                        if (deletionResult == FileOperationDialogResult.Skip)
+                            break;
+
+                        if (deletionResult == FileOperationDialogResult.Abort)
+                            return false;
+                    }
+                    
+                } while (deletionResult == FileOperationDialogResult.TryAgain);
+            }
+
+            
+            /* Recursively delete all files from directories in current directory */
+            foreach (var dir in dirs)
+            {
+                // get path for the next directory to delete
+                var nextDir = Path.Combine(dirPath, Path.GetFileName(dir));
+
+                // delete all files and folders in a directory by the specified path
+                bool deletedSuccessfully = RecursiveFilesDeletion(nextDir);
+
+                // if operation was aborted then go to the upper recursion level
+                if (!deletedSuccessfully)
+                    return false;
+
+                // delete the directory only if it is empty
+                if (Directory.GetFileSystemEntries(nextDir).Length == 0)
+                {
+                    var deletionResult = FileOperationDialogResult.Skip;
+
+                    do
+                    {
+                        try
+                        {
+                            Directory.Delete(nextDir);
+                        }
+                        catch (Exception e)
+                        {
+                            // handle exception only if file is occupied by another process
+                            if (e.GetType().IsSubclassOf(typeof(IOException)))
+                                throw;
+
+                            deletionResult = ShowFileOperationDialog(
+                                "Файл уже используется",
+                                $"Операция не может быть завершена, так как папка {Path.GetFileName(nextDir)} " +
+                                "открыта в другой программе.\nЗакройте программу и повторите попытку.",
+                                "повторить попытку",
+                                "пропустить эту папку",
+                                "прервать операцию"
+                            );
+
+                            // show a stub window so that the user knows that the program is not frozen
+                            CurrentShownInfo = new Info("Идёт операция удаления файлов. Пожалуйста, подождите...");
+                            ShowInfoWindow("Операция");
+
+
+                            if (deletionResult == FileOperationDialogResult.Skip)
+                                break;
+
+                            if (deletionResult == FileOperationDialogResult.Abort)
+                                return false;
+                        }
+                    } while (deletionResult == FileOperationDialogResult.TryAgain);
+                }
+            }
             
             return true;
         }

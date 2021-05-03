@@ -297,10 +297,23 @@ namespace ConsoleFileManager.FileManager
                         return;
                     }
                     
-                    Directory.Delete(path, recursiveDeletion);
-
-                    CurrentDirectory = Path.GetDirectoryName(path);
-                    CurrentShownInfo = Info.Empty;
+                    
+                    // show a stub window so that the user knows that the program is not frozen
+                    CurrentShownInfo = new Info("Идёт операция удаления файлов. Пожалуйста, подождите...");
+                    ShowInfoWindow("Операция");
+                    
+                    
+                    // recursively delete all files and dirs
+                    var deletedSuccessfully = RecursiveFilesDeletion(path);
+                    
+                    if (deletedSuccessfully)
+                        Directory.Delete(path);
+                    
+                    
+                    CurrentShownInfo = deletedSuccessfully ? Info.Empty : new Info("Операция удаления была прервана.");
+                    
+                    if (CurrentDirectory == path)
+                        CurrentDirectory = Path.GetDirectoryName(path.TrimEnd('\\'));
                 }
             }
             catch (Exception e)
